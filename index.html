@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para mi Niña Hermosa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #120524 0%, #30104e 100%);
+            font-family: 'Inter', sans-serif;
+            touch-action: none; /* Prevents pull-to-refresh on mobile */
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none; /* Lets clicks pass through to the canvas */
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: floatUp 1.5s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            color: #d8b4fe; /* Light purple */
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 15px rgba(216, 180, 254, 0.5);
+        }
+
+        p {
+            color: #e9d5ff;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .interaction-hint {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            color: #f3e8ff;
+            padding: 10px 24px;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(168, 85, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The UI overlay containing the romantic message -->
+    <div class="ui-layer">
+        <div class="glass-card">
+            <h1>Para mi hermosa freckles</h1>
+            <p>Hoy es el dia de la flores moradas no se porq pero tampoco vas a ser espectadora mi freckles</p>
+            <div class="interaction-hint">
+                ✨ Toca la pantalla para plantar flores ✨
+            </div>
+        </div>
+    </div>
+
+    <!-- The Canvas where the magic happens -->
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let petals = [];
+        let flowers = [];
+        
+        // Purple color palettes for the flowers
+        const flowerColors = [
+            '#9333ea', // Purple 600
+            '#a855f7', // Purple 500
+            '#c084fc', // Purple 400
+            '#d8b4fe', // Purple 300
+            '#d946ef', // Fuchsia 500
+            '#e879f9'  // Fuchsia 400
+        ];
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Petal {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * height; // Distribute initially
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -20;
+                this.size = Math.random() * 8 + 4;
+                this.speedY = Math.random() * 1 + 0.5;
+                this.speedX = Math.random() * 2 - 1;
+                this.angle = Math.random() * Math.PI * 2;
+                this.spin = (Math.random() - 0.5) * 0.1;
+                this.color = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+                this.opacity = Math.random() * 0.5 + 0.3;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + Math.sin(this.angle) * 0.5;
+                this.angle += this.spin;
+
+                if (this.y > height + 20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                // Draw a simple petal shape
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(this.size, -this.size, this.size*2, this.size, 0, this.size*2);
+                ctx.bezierCurveTo(-this.size*2, this.size, -this.size, -this.size, 0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Initialize falling petals
+        for (let i = 0; i < 40; i++) {
+            petals.push(new Petal());
+        }
+
+        class Flower {
+            constructor(x) {
+                this.x = x;
+                this.y = height;
+                this.maxHeight = height - (Math.random() * 200 + 150); // Stop somewhere in the bottom half
+                this.stemHeight = 0;
+                this.bloomRadius = 0;
+                this.maxBloom = Math.random() * 20 + 25;
+                this.color = flowerColors[Math.floor(Math.random() * flowerColors.length)];
+                this.stemColor = '#4ade80'; // Green 400
+                this.isBlooming = false;
+                this.grown = false;
+            }
+
+            update() {
+                if (this.y - this.stemHeight > this.maxHeight) {
+                    this.stemHeight += 3; // Stem growth speed
+                } else {
+                    this.isBlooming = true;
+                }
+
+                if (this.isBlooming && this.bloomRadius < this.maxBloom) {
+                    this.bloomRadius += 0.5; // Blooming speed
+                } else if (this.bloomRadius >= this.maxBloom) {
+                    this.grown = true;
+                }
+            }
+
+            draw() {
+                // Draw Stem
+                ctx.save();
+                ctx.strokeStyle = this.stemColor;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                // Slight curve to the stem
+                ctx.quadraticCurveTo(this.x + Math.sin(this.stemHeight * 0.02) * 15, this.y - this.stemHeight / 2, this.x, this.y - this.stemHeight);
+                ctx.stroke();
+
+                // Draw Bloom
+                if (this.stemHeight > 10) {
+                    let flowerCenterY = this.y - this.stemHeight;
+                    ctx.translate(this.x, flowerCenterY);
+                    
+                    // Draw Petals
+                    for (let i = 0; i < 6; i++) {
+                        ctx.rotate((Math.PI * 2) / 6);
+                        ctx.fillStyle = this.color;
+                        ctx.globalAlpha = 0.85;
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.bloomRadius/1.5, this.bloomRadius/2.5, this.bloomRadius, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Draw Center
+                    ctx.fillStyle = '#fef08a'; // Yellow center
+                    ctx.globalAlpha = 1;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.bloomRadius / 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // Plant a flower on click or touch
+        function plantFlower(e) {
+            let x;
+            if (e.touches) {
+                x = e.touches[0].clientX;
+            } else {
+                x = e.clientX;
+            }
+            flowers.push(new Flower(x));
+        }
+
+        window.addEventListener('click', plantFlower);
+        window.addEventListener('touchstart', plantFlower);
+
+        // Pre-plant a couple of flowers
+        setTimeout(() => {
+            flowers.push(new Flower(width * 0.2));
+            flowers.push(new Flower(width * 0.8));
+        }, 500);
+
+        // Main Animation Loop
+        function animate() {
+            // Clear canvas with a slight transparent background to create subtle trails (optional)
+            ctx.clearRect(0, 0, width, height);
+
+            // Update and draw petals
+            petals.forEach(petal => {
+                petal.update();
+                petal.draw();
+            });
+            // Update and draw flowers
+            flowers.forEach((flower) => {
+                flower.update();
+                flower.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        window.onload = function() {
+            animate();
+        };
+    </script>
+</body>
+</html>
